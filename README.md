@@ -5,7 +5,7 @@
 ![OWASP](https://img.shields.io/badge/OWASP-Top%2010-red)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-Bilerek zafiyetli küçük bir web uygulaması ve her açığın **düzeltilmiş** hali. Amaç, yaygın web açıklarını hem istismar edebildiğimi hem de kapatabildiğimi göstermek.
+Bilerek zafiyetli küçük bir web uygulaması (7 açık) ve her açığın **düzeltilmiş** hali. Amaç, yaygın web açıklarını hem istismar edebildiğimi hem de kapatabildiğimi göstermek.
 
 Her açık için üç şey var: **nerede**, **nasıl istismar edilir**, **nasıl düzeltilir**.
 
@@ -19,6 +19,10 @@ Her açık için üç şey var: **nerede**, **nasıl istismar edilir**, **nasıl
 - [Açık 1: SQL Injection](#açık-1-sql-injection)
 - [Açık 2: Reflected XSS](#açık-2-reflected-xss)
 - [Açık 3: IDOR](#açık-3-idor-insecure-direct-object-reference)
+- [Açık 4: CSRF](#açık-4-csrf-cross-site-request-forgery)
+- [Açık 5: Düz metin parola](#açık-5-düz-metin-parola)
+- [Açık 6: Koda yazılmış gizli anahtar](#açık-6-koda-yazılmış-gizli-anahtar)
+- [Açık 7: Giriş deneme sınırı yok](#açık-7-giriş-deneme-sınırı-yok)
 - [Özet](#özet)
 - [Testler](#testler)
 
@@ -123,13 +127,77 @@ if row["username"] != session["user"] and session.get("role") != "admin":
 
 ---
 
+## Açık 4: CSRF (Cross-Site Request Forgery)
+
+**Nerede:** [`vulnerable.py`](app/vulnerable.py) → `/note`
+
+"Özel notumu değiştir" formu, isteğin gerçekten bu siteden gelip gelmediğini kontrol etmiyor. Giriş yapmış bir kullanıcı başka bir siteyi ziyaret ettiğinde, o site kullanıcının tarayıcısına bu formu gizlice gönderttirebilir; tarayıcı oturum çerezini otomatik eklediği için istek kabul edilir.
+
+**Düzeltme:** [`secure.py`](app/secure.py) → CSRF token. Her oturum için rastgele bir token üretilir ve her forma gizli alan olarak eklenir. POST isteği bu token'ı getirmezse `400` ile reddedilir. Başka bir site token'ı bilemeyeceği için sahte form gönderemez.
+
+```python
+sent = request.form.get("csrf_token", "")
+expected = session.get("csrf_token", "")
+if not sent or not expected or not secrets.compare_digest(sent, expected):
+    abort(400)
+```
+
+Not: Testler, ilk yazdığım hâlinde bir hata yakaladı. Token eksik olduğunda "boş == boş" eşleşmesi isteği geçiriyordu. Bu yüzden token'ın boş olmaması da kontrol ediliyor.
+
+---
+
+## Açık 5: Düz metin parola
+
+**Nerede:** [`db.py`](app/db.py) → `init_db()`
+
+Zafiyetli sürümde parolalar veritabanında olduğu gibi saklanıyor. Veritabanı bir şekilde sızarsa tüm parolalar doğrudan okunur ve kullanıcılar aynı parolayı başka yerlerde de kullanıyorsa onlar da tehlikeye girer.
+
+**Düzeltme:** Güvenli sürümde parolalar **tuzlu hash** olarak saklanır (`werkzeug.security`). Girişte parola hash ile karşılaştırılır; veritabanında parolanın kendisi hiç bulunmaz.
+
+```python
+generate_password_hash(pw)              # kayıt
+check_password_hash(row["password"], p) # giriş
+```
+
+---
+
+## Açık 6: Koda yazılmış gizli anahtar
+
+**Nerede:** [`vulnerable.py`](app/vulnerable.py) → `app.secret_key`
+
+Oturum çerezlerini imzalayan anahtar kodun içine yazılmış. Kodu gören herkes (ör. GitHub'da) bu anahtarla geçerli oturum çerezi üretip başka bir kullanıcı gibi görünebilir.
+
+**Düzeltme:** Anahtar `SECRET_KEY` ortam değişkeninden okunur; tanımlı değilse her başlatmada rastgele üretilir.
+
+```python
+app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+```
+
+---
+
+## Açık 7: Giriş deneme sınırı yok
+
+**Nerede:** [`vulnerable.py`](app/vulnerable.py) → `/login`
+
+Giriş formu sınırsız sayıda denenebilir; bu da parola tahmin (brute force) saldırılarını kolaylaştırır.
+
+**Düzeltme:** Aynı IP'den 10 dakika içinde 5 başarısız denemeden sonra giriş `429 Too Many Requests` ile geçici olarak kilitlenir. Ayrıca başarılı girişten sonra oturum yenilenir (oturum sabitleme saldırısına karşı).
+
+Not: Bu sınır bellekte tutulur ve tek sunucu içindir; gerçek bir uygulamada Redis gibi paylaşılan bir depoya ve kullanıcı bazlı kilitlemeye taşınmalıdır.
+
+---
+
 ## Özet
 
-| Açık | OWASP | İstismar | Düzeltme |
+| # | Açık | OWASP 2021 | Düzeltme |
 |---|---|---|---|
-| SQL Injection | A03:2021 | `' OR '1'='1` ile giriş bypass | Parametreli sorgu |
-| Reflected XSS | A03:2021 | `<script>` enjeksiyonu | Çıktı kaçışlama |
-| IDOR | A01:2021 | id değiştirip başkasının verisi | Yetki kontrolü |
+| 1 | SQL Injection | A03 Injection | Parametreli sorgu |
+| 2 | Reflected XSS | A03 Injection | Çıktı kaçışlama |
+| 3 | IDOR | A01 Broken Access Control | Yetki kontrolü |
+| 4 | CSRF | A01 Broken Access Control | CSRF token |
+| 5 | Düz metin parola | A02 Cryptographic Failures | Tuzlu parola hash'i |
+| 6 | Koda yazılmış gizli anahtar | A05 Security Misconfiguration | Ortam değişkeni / rastgele anahtar |
+| 7 | Giriş deneme sınırı yok | A07 Identification and Authentication Failures | IP başına deneme sınırı |
 
 Her düzeltme, girdiye güvenmek yerine **girdiyi veri olarak ele almak** ve **her istekte yetki doğrulamak** ilkesine dayanır.
 
@@ -139,10 +207,10 @@ Her düzeltme, girdiye güvenmek yerine **girdiyi veri olarak ele almak** ve **h
 python -m unittest -v
 ```
 
-11 test, her açık için iki şeyi otomatik olarak kanıtlar:
+20 test, her açık için iki şeyi otomatik olarak kanıtlar:
 
-- **Zafiyetli sürümde açık gerçekten var:** SQLi ile giriş atlanıyor, XSS kodu ham basılıyor, IDOR ile başkasının notu okunuyor.
-- **Güvenli sürümde aynı saldırı engelleniyor, normal kullanım bozulmuyor:** doğru parolayla giriş çalışıyor, kullanıcı kendi profilini görebiliyor, admin herkesi görebiliyor; başkasının profili `403`, sayı olmayan id `400` döndürüyor.
+- **Zafiyetli sürümde açık gerçekten var:** 7 açığın her biri için bir test.
+- **Güvenli sürümde aynı saldırı engelleniyor, normal kullanım bozulmuyor:** doğru parolayla giriş ve token'lı form çalışıyor, kullanıcı kendi profilini görebiliyor, admin herkesi görebiliyor; başkasının profili `403`, sayı olmayan id ve token'sız form `400`, çok fazla hatalı giriş `429` döndürüyor.
 
 [GitHub Actions](.github/workflows/tests.yml) testleri her push'ta Python 3.10, 3.12 ve 3.13'te çalıştırır.
 
