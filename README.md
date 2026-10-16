@@ -1,5 +1,10 @@
 # web-guvenlik-lab
 
+[![tests](https://github.com/yusufiyilmaz/web-guvenlik-lab/actions/workflows/tests.yml/badge.svg)](https://github.com/yusufiyilmaz/web-guvenlik-lab/actions/workflows/tests.yml)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![OWASP](https://img.shields.io/badge/OWASP-Top%2010-red)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 Bilerek zafiyetli küçük bir web uygulaması ve her açığın **düzeltilmiş** hali. Amaç, yaygın web açıklarını hem istismar edebildiğimi hem de kapatabildiğimi göstermek.
 
 Her açık için üç şey var: **nerede**, **nasıl istismar edilir**, **nasıl düzeltilir**.
@@ -15,6 +20,7 @@ Her açık için üç şey var: **nerede**, **nasıl istismar edilir**, **nasıl
 - [Açık 2: Reflected XSS](#açık-2-reflected-xss)
 - [Açık 3: IDOR](#açık-3-idor-insecure-direct-object-reference)
 - [Özet](#özet)
+- [Testler](#testler)
 
 ## Kurulum
 
@@ -127,6 +133,32 @@ if row["username"] != session["user"] and session.get("role") != "admin":
 
 Her düzeltme, girdiye güvenmek yerine **girdiyi veri olarak ele almak** ve **her istekte yetki doğrulamak** ilkesine dayanır.
 
+## Testler
+
+```bash
+python -m unittest -v
+```
+
+11 test, her açık için iki şeyi otomatik olarak kanıtlar:
+
+- **Zafiyetli sürümde açık gerçekten var:** SQLi ile giriş atlanıyor, XSS kodu ham basılıyor, IDOR ile başkasının notu okunuyor.
+- **Güvenli sürümde aynı saldırı engelleniyor, normal kullanım bozulmuyor:** doğru parolayla giriş çalışıyor, kullanıcı kendi profilini görebiliyor, admin herkesi görebiliyor; başkasının profili `403`, sayı olmayan id `400` döndürüyor.
+
+[GitHub Actions](.github/workflows/tests.yml) testleri her push'ta Python 3.10, 3.12 ve 3.13'te çalıştırır.
+
+## Proje yapısı
+
+```text
+app/vulnerable.py    Zafiyetli sürüm (port 5000)
+app/secure.py        Düzeltilmiş sürüm (port 5001)
+app/db.py            Sahte verili SQLite veritabanı
+tests/               Açık ve düzeltme testleri
+```
+
 ## Sorumluluk reddi
 
 Bu teknikler yalnızca bu lab'da ya da izin verilen ortamlarda kullanılmalıdır. İzinsiz sistemlere yönelik kullanımı yasa dışıdır.
+
+## Lisans
+
+[MIT](LICENSE)
