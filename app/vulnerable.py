@@ -48,6 +48,9 @@ def home():
       <div class="box"><h3>Profil</h3>
         <form action="/profile"><input name="id" placeholder="kullanıcı id">
         <button>Göster</button></form></div>
+      <div class="box"><h3>Özel notumu değiştir</h3>
+        <form method="post" action="/note"><input name="note" placeholder="yeni not">
+        <button>Kaydet</button></form></div>
     """)
 
 
@@ -95,11 +98,30 @@ def profile():
                 f"<p>Özel not: {row['secret_note']}</p>")
 
 
+# --- Açık 4: CSRF ---
+# Form, isteğin bu siteden geldiğini doğrulamıyor. Başka bir site, giriş yapmış
+# kullanıcının tarayıcısına bu formu gönderterek notunu değiştirebilir.
+@app.route("/note", methods=["POST"])
+def note():
+    if "user" not in session:
+        return page("<p>Önce giriş yapın.</p>")
+    con = db.connect()
+    con.execute("UPDATE users SET secret_note = ? WHERE username = ?",
+                (request.form.get("note", ""), session["user"]))
+    con.commit()
+    con.close()
+    return redirect("/")
+
+
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
 
+
+# Açık 5 (düz metin parola) ve 6 (koddaki gizli anahtar) yukarıda:
+# db.init_db() parolaları olduğu gibi saklar, secret_key koda yazılmıştır.
+# Açık 7 (deneme sınırı yok): /login sınırsız sayıda denenebilir.
 
 if __name__ == "__main__":
     db.init_db()

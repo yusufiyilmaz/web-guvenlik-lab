@@ -2,6 +2,8 @@
 import sqlite3
 from pathlib import Path
 
+from werkzeug.security import generate_password_hash
+
 DB_PATH = Path(__file__).parent / "lab.db"
 
 # Sahte kullanıcılar (parolalar yalnızca lab içindir, gerçek değildir)
@@ -13,8 +15,12 @@ SEED_USERS = [
 ]
 
 
-def init_db():
-    """Veritabanını sıfırdan oluşturur ve sahte verilerle doldurur."""
+def init_db(hash_passwords=False):
+    """Veritabanını sıfırdan oluşturur ve sahte verilerle doldurur.
+
+    hash_passwords=False: parolalar düz metin saklanır (zafiyetli sürüm).
+    hash_passwords=True:  parolalar tuzlu hash olarak saklanır (güvenli sürüm).
+    """
     if DB_PATH.exists():
         DB_PATH.unlink()
     con = sqlite3.connect(DB_PATH)
@@ -29,9 +35,13 @@ def init_db():
         );
         """
     )
+    rows = [
+        (uid, name, generate_password_hash(pw) if hash_passwords else pw, role, note)
+        for uid, name, pw, role, note in SEED_USERS
+    ]
     con.executemany(
         "INSERT INTO users (id, username, password, role, secret_note) VALUES (?, ?, ?, ?, ?)",
-        SEED_USERS,
+        rows,
     )
     con.commit()
     con.close()
@@ -41,8 +51,3 @@ def connect():
     con = sqlite3.connect(DB_PATH)
     con.row_factory = sqlite3.Row
     return con
-
-
-if __name__ == "__main__":
-    init_db()
-    print(f"Veritabanı oluşturuldu: {DB_PATH}")
