@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}My notes{% endblock %}
+{% block content %}
+<div class="grid">
+  <section>
+    <h1>My notes</h1>
+    {% if notes %}
+      <ul class="note-list">
+        {% for n in notes %}
+          <li><a href="{{ url_for('notes.view_note', note_id=n.id) }}">
+            <span class="note-id">#{{ n.id }}</span> {{ n.title }}</a></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No notes yet.</p>
+    {% endif %}
+  </section>
+
+  <aside class="card">
+    <h2>New note</h2>
+    <form method="post" action="{{ url_for('notes.create_note') }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Title <input name="title" required maxlength="120"></label>
+      <label>Body <textarea name="body" rows="5" required></textarea></label>
+      <button class="primary">Save note</button>
+    </form>
+  </aside>
+</div>
+{% endblock %}

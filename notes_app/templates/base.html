@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Notes{% endblock %} · Notes</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="mode-bar {{ 'mode-vuln' if config.VULNERABLE else 'mode-secure' }}">
+    {% if config.VULNERABLE %}
+      Vulnerable mode · intentionally insecure training app · localhost only
+    {% else %}
+      Secure mode · all vulnerabilities fixed · localhost only
+    {% endif %}
+  </div>
+
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('notes.index') }}">
+      <span class="logo" aria-hidden="true">✎</span> Notes
+    </a>
+    {% if session.user_id %}
+      <form class="search" action="{{ url_for('notes.search') }}" method="get">
+        <input type="search" name="q" placeholder="Search your notes" value="{{ request.args.get('q', '') }}">
+      </form>
+      <div class="user">
+        <span class="avatar">{{ session.username[0]|upper }}</span>
+        <span>{{ session.username }}{% if session.role == 'admin' %} <span class="tag">admin</span>{% endif %}</span>
+        <form action="{{ url_for('notes.logout') }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="link">Sign out</button>
+        </form>
+      </div>
+    {% endif %}
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages() %}
+      {% for m in messages %}<div class="flash">{{ m }}</div>{% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

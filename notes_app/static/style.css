@@ -1,0 +1,69 @@
+:root {
+  --bg: #f6f7f9; --card: #fff; --text: #1b1f24; --muted: #667085; --line: #e4e7ec;
+  --accent: #4f46e5; --accent-text: #fff; --danger: #d92d20; --ok: #067647;
+  --vuln-bg: #fef3f2; --vuln-text: #b42318; --secure-bg: #ecfdf3; --secure-text: #067647;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115; --card: #171a21; --text: #e6e8eb; --muted: #98a2b3; --line: #2a2f3a;
+    --accent: #818cf8; --accent-text: #0f1115; --danger: #f97066;
+    --vuln-bg: #3b1513; --vuln-text: #fda29b; --secure-bg: #0c2a1c; --secure-text: #75e0a7;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+       font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1 { font-size: 1.5rem; margin: 0 0 1rem; }
+h2 { font-size: 1.1rem; margin: 0 0 .75rem; }
+code { font-family: ui-monospace, Consolas, monospace; font-size: .9em; }
+
+.mode-bar { text-align: center; font-size: .8rem; font-weight: 600; padding: 6px 16px; }
+.mode-vuln { background: var(--vuln-bg); color: var(--vuln-text); }
+.mode-secure { background: var(--secure-bg); color: var(--secure-text); }
+
+.topbar { display: flex; align-items: center; gap: 16px; padding: 12px 24px;
+          background: var(--card); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.brand { font-weight: 700; font-size: 1.1rem; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.logo { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px;
+        background: var(--accent); color: var(--accent-text); }
+.search { flex: 1; max-width: 420px; }
+.search input { width: 100%; }
+.user { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.avatar { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+          background: var(--line); font-weight: 700; }
+.tag { font-size: .7rem; padding: 1px 6px; border-radius: 999px; background: var(--accent); color: var(--accent-text); }
+
+.container { max-width: 960px; margin: 32px auto; padding: 0 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
+@media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+
+.stack { display: grid; gap: 12px; }
+label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); }
+input, textarea { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line);
+                  border-radius: 8px; padding: 8px 10px; width: 100%; }
+textarea { resize: vertical; }
+button { font: inherit; cursor: pointer; border-radius: 8px; padding: 8px 14px; border: 1px solid var(--line);
+         background: var(--card); color: var(--text); }
+button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+button.danger { color: var(--danger); border-color: var(--danger); background: transparent; }
+button.link { border: 0; background: none; color: var(--muted); padding: 0; }
+
+.auth-card { max-width: 380px; margin: 40px auto; }
+.muted, .hint { color: var(--muted); }
+.hint { font-size: .8rem; margin-top: 16px; }
+.error, .flash { padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; font-size: .9rem; }
+.error { background: var(--vuln-bg); color: var(--vuln-text); }
+.flash { background: var(--secure-bg); color: var(--secure-text); }
+
+.note-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.note-list a { display: block; padding: 12px 14px; background: var(--card); border: 1px solid var(--line);
+               border-radius: var(--radius); color: var(--text); }
+.note-list a:hover { border-color: var(--accent); text-decoration: none; }
+.note-id { color: var(--muted); font-size: .8rem; font-family: ui-monospace, Consolas, monospace; margin-right: 6px; }
+.note-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.note-body { white-space: pre-wrap; margin: 8px 0 20px; }
+.owner-warning { color: var(--vuln-text); font-weight: 600; font-size: .9rem; }

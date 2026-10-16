@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ note.title }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('notes.list_notes') }}">← My notes</a></p>
+<article class="card note">
+  <div class="note-head">
+    <h1>{{ note.title }}</h1>
+    <span class="note-id">#{{ note.id }}</span>
+  </div>
+  {# Açık 2b — Stored XSS: zafiyetli modda içerik kaçışlanmadan basılır #}
+  <div class="note-body">{% if config.VULNERABLE %}{{ note.body|safe }}{% else %}{{ note.body }}{% endif %}</div>
+  {% if note.user_id == session.user_id %}
+    <form method="post" action="{{ url_for('notes.delete_note', note_id=note.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="danger">Delete note</button>
+    </form>
+  {% else %}
+    <p class="owner-warning">This note belongs to another user.</p>
+  {% endif %}
+</article>
+{% endblock %}

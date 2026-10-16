@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+<div class="auth-card card">
+  <h1>Sign in</h1>
+  <p class="muted">Your private notes, in one place.</p>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('notes.login') }}" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Username <input name="username" autocomplete="username" required></label>
+    <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+    <button class="primary">Sign in</button>
+  </form>
+  <p class="hint">Demo accounts: <code>yusuf / parola1</code>, <code>ayse / deneme5</code></p>
+</div>
+{% endblock %}

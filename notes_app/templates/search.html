@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block content %}
+{# Açık 2a — Reflected XSS: zafiyetli modda arama terimi kaçışlanmadan basılır #}
+<h1>Results for “{% if config.VULNERABLE %}{{ q|safe }}{% else %}{{ q }}{% endif %}”</h1>
+{% if results %}
+  <ul class="note-list">
+    {% for n in results %}
+      <li><a href="{{ url_for('notes.view_note', note_id=n.id) }}">
+        <span class="note-id">#{{ n.id }}</span> {{ n.title }}</a></li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">No matching notes.</p>
+{% endif %}
+{% endblock %}
